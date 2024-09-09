@@ -1,26 +1,30 @@
 package org.enset.app.ensetdemospringangular.web;
 
+import org.enset.app.ensetdemospringangular.dtos.NewPaymentDTO;
 import org.enset.app.ensetdemospringangular.entities.Payment;
 import org.enset.app.ensetdemospringangular.entities.PaymentStatus;
 import org.enset.app.ensetdemospringangular.entities.PaymentType;
 import org.enset.app.ensetdemospringangular.entities.Student;
 import org.enset.app.ensetdemospringangular.repository.PaymentRepository;
 import org.enset.app.ensetdemospringangular.repository.StudentRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.enset.app.ensetdemospringangular.services.PaymentService;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
+@CrossOrigin("*")
 public class PaymentRestController {
     private StudentRepository studentRepository;
     private PaymentRepository paymentRepository;
+    private PaymentService paymentService;
 
-    public PaymentRestController(StudentRepository studentRepository, PaymentRepository paymentRepository) {
+    public PaymentRestController(StudentRepository studentRepository, PaymentRepository paymentRepository, PaymentService paymentService) {
         this.studentRepository = studentRepository;
         this.paymentRepository = paymentRepository;
+        this.paymentService = paymentService;
     }
 
     @GetMapping("/payments")
@@ -62,4 +66,21 @@ public class PaymentRestController {
     public List<Student> getStudentByProgramId(@RequestParam String programId){
         return  studentRepository.findByProgramId(programId);
     }
+
+    @PutMapping("/payments/{id}")
+    public Payment updatePaymentStatus(@RequestParam PaymentStatus status,@PathVariable Long id){
+        return paymentService.updatePaymentStatus(status,id);
+    }
+
+    @PostMapping(path = "/payments",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Payment savePayment(@RequestParam("file") MultipartFile file, NewPaymentDTO newPaymentDTO) throws IOException {
+        return this.paymentService.savePayment(file,newPaymentDTO);
+    }
+
+    @GetMapping(path = "/payments/{paymentId}/file",produces = MediaType.APPLICATION_PDF_VALUE)
+    public byte[] getPaymentFile(@PathVariable Long paymentId) throws IOException {
+        return paymentService.getPaymentFile(paymentId);
+    }
+
+
 }
